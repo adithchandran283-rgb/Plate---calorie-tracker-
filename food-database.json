@@ -1,0 +1,96 @@
+{
+  "foods": [
+    {
+      "id": "rice-raw",
+      "name": "Rice",
+      "state": "uncooked",
+      "category": "Grains",
+      "nutrition_per_100g": {
+        "calories": 365,
+        "protein": 7.1,
+        "carbs": 80,
+        "fat": 0.7,
+        "fiber": 1.3
+      }
+    },
+    {
+      "id": "rice-cooked",
+      "name": "Rice",
+      "state": "cooked",
+      "category": "Grains",
+      "nutrition_per_100g": {
+        "calories": 130,
+        "protein": 2.7,
+        "carbs": 28.2,
+        "fat": 0.3,
+        "fiber": 0.4
+      }
+    },
+    {
+      "id": "banana-raw",
+      "name": "Banana",
+      "state": "raw",
+      "category": "Fruits",
+      "nutrition_per_100g": {
+        "calories": 89,
+        "protein": 1.1,
+        "carbs": 22.8,
+        "fat": 0.3,
+        "fiber": 2.6
+      }
+    },
+    {
+      "id": "soya-chunks-uncooked",
+      "name": "Soya Chunks",
+      "state": "uncooked",
+      "category": "Protein",
+      "nutrition_per_100g": {
+        "calories": 345,
+        "protein": 52,
+        "carbs": 33,
+        "fat": 0.5,
+        "fiber": 13
+      }
+    },
+    {
+      "id": "soya-chunks-cooked",
+      "name": "Soya Chunks",
+      "state": "cooked",
+      "category": "Protein",
+      "nutrition_per_100g": {
+        "calories": 115,
+        "protein": 17.3,
+        "carbs": 11,
+        "fat": 0.2,
+        "fiber": 4.3
+      }
+    },
+    {
+      "id": "oats-raw",
+      "name": "Oats",
+      "state": "raw",
+      "category": "Grains",
+      "nutrition_per_100g": {
+        "calories": 379,
+        "protein": 13.2,
+        "carbs": 67.7,
+        "fat": 6.5,
+        "fiber": 10.1
+      }
+    },
+    {
+      "id": "milk-whole",
+      "name": "Whole Milk",
+      "state": "liquid",
+      "category": "Dairy",
+      "serving_size": "100ml",
+      "nutrition_per_100g": {
+        "calories": 61,
+        "protein": 3.2,
+        "carbs": 4.8,
+        "fat": 3.3,
+        "fiber": 0
+      }
+    }
+  ]
+}
