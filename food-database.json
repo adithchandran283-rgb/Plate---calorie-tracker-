@@ -98,11 +98,11 @@
       "state": "raw",
       "category": "Grains",
       "nutrition_per_100g": {
-        "calories": 379,
-        "protein": 13.2,
-        "carbs": 67.7,
-        "fat": 6.5,
-        "fiber": 10.1
+        "calories": 347,
+        "protein": 23.9,
+        "carbs": 62.2,
+        "fat": 1.2,
+        "fiber": 16.3
       }
     }
   ]
