@@ -91,6 +91,19 @@
         "fat": 3.3,
         "fiber": 0
       }
+    },
+    {
+      "id": "Cherupayar-raw",
+      "name": "Cherupayar",
+      "state": "raw",
+      "category": "Grains",
+      "nutrition_per_100g": {
+        "calories": 379,
+        "protein": 13.2,
+        "carbs": 67.7,
+        "fat": 6.5,
+        "fiber": 10.1
+      }
     }
   ]
 }
