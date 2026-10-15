@@ -104,6 +104,19 @@
         "fat": 1.2,
         "fiber": 16.3
       }
+    },
+    {
+      "id": "egg-cooked",
+      "name": "egg",
+      "state": "cooked",
+      "category": "Protein",
+      "nutrition_per_100g": {
+        "calories": 155,
+        "protein": 12.6,
+        "carbs": 1.1,
+        "fat": 10.6,
+        "fiber": 0
+      }
     }
   ]
 }
