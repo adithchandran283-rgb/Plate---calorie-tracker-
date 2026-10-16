@@ -1,8 +1,12 @@
-const CACHE_NAME = 'plate-pwa-v1';
+const CACHE_NAME = 'plate-pwa-v2';
 const APP_SHELL = [
   './',
   './index.html',
+  './calorie.html',
   './manifest.json',
+  './food-database.json',
+  './icon-192.png',
+  './icon-512.png',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
@@ -10,7 +14,8 @@ const APP_SHELL = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(APP_SHELL))
+      // add one by one so a missing file never blocks the whole install
+      .then(cache => Promise.allSettled(APP_SHELL.map(url => cache.add(url))))
       .then(() => self.skipWaiting())
   );
 });
