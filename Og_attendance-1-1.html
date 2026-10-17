@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Attendance Buddy</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0E2A33">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Attendance"><meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="icon-192.png">
+
+<style>
+:root{
+  --bg:#E8EFF1;--surface:#FFFFFF;--ink:#0E2A33;--muted:#566F7A;--line:#CBD9DE;
+  --panel:#0E2A33;--panel-ink:#F2F7F8;--panel-muted:#9DB6BF;--ring:#FFB020;--ring-track:rgba(255,255,255,.13);
+  --accent:#2F6BFF;--accent-ink:#FFFFFF;--micro:#14966F;--over:#FF6B57;--fill-track:#DCE7EB;
+  --font-display:ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --ease:cubic-bezier(.22,.8,.3,1);
+  /* attendance names mapped onto the new palette */
+  --tx:var(--ink);--mu:var(--muted);--bd:var(--line);--card:var(--surface);--none:var(--fill-track);--ringbg:var(--fill-track);
+  --hi:#2F6BFF;--lo:var(--micro);--zero:var(--over);--or:#FF9F1C;--hol:#FFD166;--ok:var(--micro);--bad:var(--over);--pri:var(--accent);
+  --g-fill:linear-gradient(145deg,rgba(255,255,255,.80),rgba(255,255,255,.46));
+  --g-line:rgba(255,255,255,.78);--g-hi:rgba(255,255,255,.95);--g-shadow:rgba(14,42,51,.12);
+  --g-input:rgba(255,255,255,.55);--g-seg:rgba(14,42,51,.07);--g-seg-on:rgba(255,255,255,.92);--g-chip:rgba(255,255,255,.4);
+  --g-blob1:rgba(47,107,255,.24);
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#08161B;--surface:#112630;--ink:#E7F0F2;--muted:#8FA8B2;--line:#1F3944;
+    --panel:#0F2C37;--accent:#5B8CFF;--micro:#2DC194;--fill-track:#1B3440;
+    --g-fill:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
+    --g-line:rgba(255,255,255,.13);--g-hi:rgba(255,255,255,.16);--g-shadow:rgba(0,0,0,.40);
+    --g-input:rgba(255,255,255,.06);--g-seg:rgba(255,255,255,.07);--g-seg-on:rgba(255,255,255,.16);--g-chip:rgba(255,255,255,.05);
+    --g-blob1:rgba(91,140,255,.22);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#08161B;--surface:#112630;--ink:#E7F0F2;--muted:#8FA8B2;--line:#1F3944;
+  --panel:#0F2C37;--accent:#5B8CFF;--micro:#2DC194;--fill-track:#1B3440;
+  --g-fill:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
+  --g-line:rgba(255,255,255,.13);--g-hi:rgba(255,255,255,.16);--g-shadow:rgba(0,0,0,.40);
+  --g-input:rgba(255,255,255,.06);--g-seg:rgba(255,255,255,.07);--g-seg-on:rgba(255,255,255,.16);--g-chip:rgba(255,255,255,.05);
+  --g-blob1:rgba(91,140,255,.22);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%;overflow-anchor:none;scrollbar-gutter:stable;-webkit-tap-highlight-color:transparent}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0 auto;min-height:100%;max-width:560px;padding:16px 18px 200px;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,var(--g-blob1),transparent 38%)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+:focus:not(:focus-visible){outline:none}
+h1,h2,h3,p{margin:0}
+.mu{color:var(--muted);font-size:.85rem}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ic{width:1.15em;height:1.15em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;vertical-align:-.2em}
+
+/* Top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
+.when{text-align:center;min-width:0}
+.when h1{font-family:var(--font-display);font-weight:700;font-size:1.35rem;letter-spacing:-.01em}
+.when p{color:var(--muted);font-size:.85rem}
+.icon-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--g-line);background:var(--g-fill);box-shadow:0 2px 6px -3px var(--g-shadow),inset 0 1px 0 var(--g-hi);display:grid;place-items:center;padding:0;line-height:1;flex:none;color:var(--ink);transition:transform .15s}
+.icon-btn:active{transform:scale(.92)}
+.icon-btn .ic{width:20px;height:20px}
+.logo{color:var(--accent);cursor:default}
+
+/* Cards */
+.card{background:var(--g-fill);border:1px solid var(--g-line);border-radius:24px;padding:16px;margin-bottom:14px;box-shadow:0 4px 10px -6px var(--g-shadow),inset 0 1px 0 var(--g-hi)}
+h2{display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-weight:700;font-size:1.2rem;letter-spacing:-.01em;margin:0 0 12px}
+h2 .ic{color:var(--accent);width:18px;height:18px}
+
+/* Hero */
+.hero{background:radial-gradient(120% 70% at 18% 0%,rgba(255,255,255,.17),transparent 58%),linear-gradient(160deg,rgba(34,78,94,.94),rgba(10,34,43,.97));color:var(--panel-ink);border:0;border-radius:32px;padding:26px 22px 20px;text-align:center;position:relative;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.30),inset 0 0 0 1px rgba(255,255,255,.08),0 6px 14px -8px rgba(14,42,51,.5)}
+.hero .mu{color:var(--panel-muted)}.hero b{color:var(--panel-ink)}
+.hb{display:flex;flex-direction:column;align-items:center;gap:0}
+.hb .tx{margin-top:14px;font-family:var(--font-display);font-weight:600;font-size:1.15rem;line-height:1.35}
+.hb .tx .mu{font-family:var(--font-body);font-weight:400;font-size:.9rem}
+.hb .tx b{font-weight:700}
+.chips{display:flex;gap:8px;margin-top:16px}
+.chips div{flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:10px 6px;text-align:center;font-size:.78rem;color:var(--panel-muted)}
+.chips b{display:block;font-family:var(--font-display);font-size:1.25rem;letter-spacing:-.02em;color:var(--panel-ink)}
+
+/* Rings */
+.ring{position:relative;flex:none}
+.ring svg{display:block;width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-linecap:round}
+.ring .t{stroke:var(--fill-track)}
+.hero .ring .t{stroke:var(--ring-track)}
+.ring .rp{transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1),stroke .4s}
+.ring>div{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:1.6rem;letter-spacing:-.02em}
+.hero .ring{width:min(240px,72vw)!important;height:auto!important;aspect-ratio:1}
+.hero .ring>div .big{font-size:clamp(2.8rem,15vw,3.6rem);line-height:1;letter-spacing:-.03em}
+.hero .ring>div .small{color:var(--panel-muted);font-family:var(--font-body);font-weight:400;font-size:.9rem;letter-spacing:0;margin-top:4px}
+
+/* Nudge (toast style) */
+.nudge{display:flex;justify-content:space-between;align-items:center;gap:8px;background:color-mix(in srgb,var(--ink) 86%,transparent);color:var(--surface);border-radius:18px;padding:6px 6px 6px 16px;margin-bottom:14px;font-weight:500;font-size:.95rem;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 6px 14px -8px rgba(0,0,0,.45)}
+.nudge .ni{display:flex;align-items:center;gap:8px}
+.nudge button{border:0;background:transparent;color:var(--ring);font-weight:700;font-size:.95rem;padding:10px 14px;border-radius:12px}
+
+/* Week */
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.d{border:1px solid var(--g-line);border-radius:16px;padding:9px 0;background:var(--g-chip);color:var(--ink);text-align:center;box-shadow:inset 0 1px 0 var(--g-hi);transition:transform .18s var(--ease)}
+.d:active,.c:active{transform:scale(.92)}
+.d b{display:block;font-size:.68rem;opacity:.8;font-weight:600}
+.d span{display:block;font-family:var(--font-display);font-size:1.1rem;font-weight:700}
+.d small{display:flex;justify-content:center;align-items:center;height:14px;font-size:.62rem}
+.d.today{outline:2px solid var(--accent);outline-offset:2px}
+.hi{background:var(--hi)!important;color:#fff;border-color:transparent!important}
+.lo{background:var(--lo)!important;color:#fff;border-color:transparent!important}
+.zero{background:var(--zero)!important;color:#fff;border-color:transparent!important}
+.or{background:var(--or)!important;color:#1B1300;border-color:transparent!important}
+.hol{background:var(--hol)!important;color:#1B1300;border-color:transparent!important}
+.nav2{display:flex;gap:6px}
+.nav2 button{width:36px;height:36px;border-radius:50%;border:1px solid var(--g-line);background:var(--g-fill);box-shadow:0 2px 6px -3px var(--g-shadow),inset 0 1px 0 var(--g-hi);display:grid;place-items:center;padding:0;color:var(--ink);transition:transform .15s}
+.nav2 button:active{transform:scale(.92)}
+.nav2 button .ic{width:16px;height:16px}
+
+/* Planner */
+input[type=range]{width:100%;accent-color:var(--accent)}
+.pl{margin:8px 0;font-size:.92rem}
+.res{background:var(--fill-track);border-radius:18px;padding:14px;text-align:center;font-size:.95rem;margin-top:8px}
+.res b{font-family:var(--font-display);font-size:1.6rem;letter-spacing:-.02em}
+.pi{display:inline-flex;align-items:center;gap:5px;vertical-align:middle;font-size:.9rem;font-weight:700}.pi.g{color:var(--ok)}.pi.r{color:var(--bad)}
+
+/* Chips (months / filters) */
+.months{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:6px;scrollbar-width:none}
+.months::-webkit-scrollbar{display:none}
+.m{flex:none;border:1px solid var(--g-line);background:var(--g-chip);border-radius:99px;padding:8px 14px;font-size:.92rem;font-weight:500;transition:background .15s,border-color .15s,color .15s,transform .18s var(--ease)}
+.m:active{transform:scale(.93)}
+.m.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+
+/* Calendar */
+.ringbox{display:flex;align-items:center;gap:18px;margin:8px 0 14px}
+.stats div{font-size:.92rem;color:var(--muted);margin:4px 0}.stats b{color:var(--ink);font-family:var(--font-display)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal .h{font-size:.72rem;color:var(--muted);text-align:center;font-weight:600}
+.c{aspect-ratio:1;border:1px solid var(--g-line);border-radius:12px;background:var(--g-chip);color:var(--ink);font-size:.8rem;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0;transition:transform .18s var(--ease)}
+.c small{display:flex;align-items:center;height:11px;font-size:.58rem;font-weight:500}
+.c.e{background:none;border:0;pointer-events:none}
+.leg{display:flex;gap:12px;font-size:.75rem;color:var(--muted);margin-top:14px;flex-wrap:wrap}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
+
+/* Bars */
+.bar{height:10px;border-radius:99px;background:var(--fill-track);margin:10px 0 8px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;transition:width .9s cubic-bezier(.2,.8,.2,1),background-color .3s}
+
+/* Buttons */
+.add,.sec,.pri{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:48px;padding:0 18px;border-radius:16px;border:1px solid transparent;font-weight:700;font-size:1rem;transition:transform .18s var(--ease),background .2s}
+.add:active,.sec:active,.pri:active{transform:scale(.96)}
+.pri{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 80%,#fff),var(--accent));color:var(--accent-ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 0 0 1px rgba(255,255,255,.14),0 5px 12px -6px color-mix(in srgb,var(--accent) 70%,transparent)}
+.sec{background:var(--g-fill);border-color:var(--g-line);color:var(--ink);box-shadow:0 2px 6px -3px var(--g-shadow),inset 0 1px 0 var(--g-hi)}
+.add{width:100%;margin:6px 0;background:var(--g-chip);border:1.5px dashed var(--line);color:var(--ink)}
+.add .ic{color:var(--accent)}
+.btns{display:flex;gap:10px;margin-top:10px}.btns button{flex:1}
+.btns button .ic{width:17px;height:17px}
+
+/* Inputs */
+input[type=text],input[type=number],input[type=date],select{height:46px;padding:0 12px;border-radius:14px;border:1.5px solid var(--g-line);background:var(--g-input);box-shadow:inset 0 1px 2px var(--g-shadow);font-size:1rem;max-width:100%;transition:border-color .2s}
+textarea{width:100%;height:90px;font-size:.75rem;padding:10px 12px;border-radius:14px;border:1.5px solid var(--g-line);background:var(--g-input);box-shadow:inset 0 1px 2px var(--g-shadow)}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
+.fw{width:100%;margin-bottom:8px}
+.set{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0}.set input{width:76px;text-align:center}
+.set+.set{border-top:1px solid var(--line)}
+.seg{display:flex;position:relative;background:var(--g-seg);border-radius:16px;padding:4px;gap:4px;box-shadow:inset 0 1px 2px var(--g-shadow)}
+.seg button{flex:1;height:40px;border:0;border-radius:12px;background:transparent;font-weight:600;color:var(--muted)}.seg button.on{color:var(--ink);background:var(--g-seg-on)}
+
+/* Tips / empty */
+.tip{display:flex;gap:10px;align-items:flex-start;margin:10px 0}.tip .ic{color:var(--accent);width:18px;height:18px;margin-top:1px}
+.empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:26px 18px;text-align:center;border:1.5px dashed var(--line);background:none;box-shadow:none}
+.empty .ic{width:28px;height:28px;color:var(--accent);opacity:.7}
+
+/* Tasks */
+.tk{display:flex;align-items:center;gap:10px;padding:12px 14px;margin-bottom:10px;transition:opacity .25s ease,transform .35s var(--ease)}
+.tk.dn b{text-decoration:line-through;opacity:.55}.tk.un b{opacity:.7}
+.tk.out{opacity:0;transform:translateX(28px) scale(.97)}
+.tl{display:flex;align-items:center;gap:5px}.tl .ic{width:13px;height:13px}
+.ck,.ux{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);background:transparent;color:#fff;padding:0;flex:none;display:grid;place-items:center}
+.ck.on{background:var(--ok);border-color:var(--ok)}.ux.on{background:var(--bad);border-color:var(--bad)}
+.ck .ic{width:16px;height:16px;stroke-width:3}.ux .ic{width:12px;height:12px;stroke-width:2.8}
+.ux{color:var(--muted)}.ux.on{color:#fff}
+.x{width:36px;height:36px;border-radius:50%;border:1px solid var(--g-line);background:var(--g-chip);color:var(--muted);display:inline-grid;place-items:center;padding:0;user-select:none;-webkit-user-select:none;transition:transform .15s,color .15s}
+.x:active{transform:scale(.88)}.x .ic{width:16px;height:16px}
+@media(hover:hover){.x:hover,.tk .x:hover{color:var(--over)}.ck:hover{border-color:var(--ok)}}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.ck.pop,.ux.pop{animation:bump .5s cubic-bezier(.3,1.6,.5,1)}
+.ck.pop path{stroke-dasharray:24;stroke-dashoffset:24;animation:draw .3s .08s var(--ease) forwards}
+
+/* Toggle */
+.tgl{position:relative;width:50px;height:30px;border-radius:99px;padding:0;border:1px solid var(--g-line);background:var(--fill-track);flex:none;transition:background .25s,border-color .25s}
+.tgl i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.25);transition:transform .3s cubic-bezier(.3,1.5,.5,1)}
+.tgl.on{background:var(--ok);border-color:var(--ok)}.tgl.on i{transform:translateX(20px)}
+
+/* Tab switch: cards rise in one after another */
+.rise{animation:cardrise .46s var(--ease) both;backface-visibility:hidden}
+@keyframes cardrise{from{opacity:0;transform:translate3d(0,22px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+
+/* Tab bar */
+.tab{position:fixed;left:14px;right:14px;bottom:calc(12px + env(safe-area-inset-bottom,0px));margin:0 auto;max-width:420px;z-index:15;display:block;padding:0;background:none;border:0}
+#nav{position:relative;display:flex;gap:2px;width:100%;max-width:none;background:color-mix(in srgb,var(--surface) 62%,transparent);border:1px solid var(--g-line);border-radius:99px;padding:6px;-webkit-backdrop-filter:blur(6px) saturate(1.4);backdrop-filter:blur(6px) saturate(1.4);box-shadow:0 10px 28px -10px rgba(14,42,51,.35),inset 0 1px 0 var(--g-hi),inset 0 0 0 1px rgba(255,255,255,.06);transform:translateZ(0)}
+#nav::before{display:none}
+#nav .hl{position:absolute;left:0;top:6px;height:calc(100% - 12px);width:0;border-radius:99px;pointer-events:none;will-change:transform;transition:transform .5s var(--ease);background:color-mix(in srgb,var(--accent) 16%,transparent);box-shadow:inset 0 1px 0 var(--g-hi)}
+#nav button{flex:1;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;color:var(--muted);font-size:.72rem;font-weight:600;border-radius:99px;position:relative;z-index:1;user-select:none;-webkit-user-select:none;transition:color .2s,transform .18s var(--ease)}
+#nav button span{display:grid;place-items:center;height:24px}
+#nav button svg{width:24px;height:24px;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+#nav button.on{color:var(--accent)}
+#nav button:active{transform:scale(.94)}
+#nav button.on svg{transform:translateY(-2px) scale(1.12)}
+
+/* FAB */
+.fab{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:14;height:56px;padding:0 26px 0 20px;border-radius:99px;border:0;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 80%,#fff),var(--accent));color:var(--accent-ink);font-weight:700;font-size:1.05rem;display:flex;align-items:center;gap:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 0 0 1px rgba(255,255,255,.14),0 10px 28px rgba(20,60,160,.35);transition:transform .2s cubic-bezier(.3,1.5,.5,1);touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.fab:active{transform:translateX(-50%) scale(.95)}
+.fab .ic{width:22px;height:22px;stroke-width:2.6}
+.fab[hidden]{display:none}
+
+/* Sheet: slide + glass blur */
+.ov{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center;visibility:hidden;transition:visibility 0s .46s}.ov::before{content:"";position:absolute;inset:0;background:rgba(15,20,42,.33);opacity:0;transition:opacity .34s ease;will-change:opacity}
+.ov.on{visibility:visible;transition:visibility 0s}.ov.on::before{opacity:1}.ov.warm{visibility:visible;pointer-events:none}.ov.warm::before{opacity:0;transition:none}
+.sheet{position:relative;z-index:1;width:100%;overscroll-behavior:contain;max-width:560px;max-height:92vh;max-height:92dvh;overflow-y:auto;border-radius:28px 28px 0 0;padding:10px 20px calc(22px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--surface) 8%,transparent);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);box-shadow:inset 0 1px 0 var(--g-hi);transform:translate3d(0,100%,0);transition:transform .46s cubic-bezier(.32,.72,0,1);will-change:transform;backface-visibility:hidden}
+.ov.on .sheet{transform:none}
+.sheet:before{content:"";display:block;width:42px;height:5px;border-radius:9px;background:color-mix(in srgb,var(--ink) 22%,transparent);margin:0 auto 12px}
+.sheet h2{font-size:1.3rem;margin-bottom:12px}
+.tg{display:flex;gap:8px;align-items:center;margin:4px 0 12px;font-size:.95rem;cursor:pointer}
+.tg input{accent-color:var(--accent);width:18px;height:18px}.tg .ic{color:var(--accent)}
+.er{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;background:var(--g-chip);border:1px solid var(--g-line);border-radius:18px;padding:12px;margin-bottom:8px}
+.er select{flex:1 1 100%}
+.st{display:flex;align-items:center;gap:6px;flex:1}
+.st:before{content:attr(data-l);font-size:.72rem;color:var(--muted);margin-right:4px;min-width:50px}
+.st button{width:36px;height:36px;border-radius:50%;border:1px solid var(--g-line);background:var(--g-fill);box-shadow:inset 0 1px 0 var(--g-hi);color:var(--ink);display:grid;place-items:center;padding:0;transition:transform .15s}
+.st button:active{transform:scale(.88)}.st button .ic{width:16px;height:16px}
+.st output{min-width:22px;text-align:center;font-family:var(--font-display);font-weight:700}
+
+/* No blur: Glass blur switched off, or reduced transparency */
+html[data-glass="off"] #nav{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}
+html[data-glass="off"] .sheet{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){#nav,.sheet{background:var(--surface)}}
+@media (prefers-reduced-transparency:reduce){#nav,.sheet{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+.row h2{margin:0;white-space:nowrap;font-size:1.1rem}
+</style></head><body>
+<header class="top"><span class="icon-btn logo" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3"/><path d="M9.5 10l2 2 3.5-4"/></svg></span><div class="when"><h1>Attendance Buddy</h1><p id="dt"></p></div><button id="tb" class="icon-btn" onclick="tog()" aria-label="Toggle theme"></button></header>
+<div id="main" style="margin-top:12px"></div>
+<div class="tab"><div id="nav"></div></div>
+<button class="fab" id="fab" type="button" onclick="op(iso(new Date()))"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Log today</button>
+<div class="ov" id="ov"><div class="sheet" id="sheet"></div></div>
+
+<script>
+const IC={
+home:`<path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/>`,
+cal:`<rect x="3.5" y="5" width="17" height="15" rx="3.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/>`,
+book:`<path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3"/>`,
+checkc:`<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>`,
+xc:`<circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/>`,
+check:`<path d="M5 12.5l4.5 4.5L19 7.5"/>`,
+settings:`<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>`,
+moon:`<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>`,
+sun:`<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/>`,
+bell:`<path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 21h4"/>`,
+calc:`<rect x="5" y="3" width="14" height="18" rx="3"/><path d="M8.5 7.5h7M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/>`,
+plus:`<path d="M12 5v14M5 12h14"/>`,
+minus:`<path d="M5 12h14"/>`,
+x:`<path d="M6 6l12 12M18 6L6 18"/>`,
+trash:`<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a1.5 1.5 0 0 0 1.5 1.5h7A1.5 1.5 0 0 0 17 19l1-12M9 7V4.5h6V7"/>`,
+chevl:`<path d="M15 5l-7 7 7 7"/>`,
+chevr:`<path d="M9 5l7 7-7 7"/>`,
+dot:`<circle cx="12" cy="12" r="3.2"/>`,
+cap:`<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5"/>`,
+refresh:`<path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v4.5h-4.5"/>`,
+undo:`<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>`,
+box:`<path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14"/>`,
+bulb:`<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.3 1 2.1h5c0-.8.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>`,
+alert:`<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/>`,
+phone:`<rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/>`,
+pencil:`<path d="M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z"/><path d="M14.5 6.5l3 3"/>`,
+file:`<path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>`,
+mic:`<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>`,
+notes:`<path d="M6 3h11a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6z"/><path d="M9 8h6M9 12h6M9 16h3"/>`
+};
+const I=(n,s)=>`<svg class="ic" viewBox="0 0 24 24"${s?` style="width:${s}px;height:${s}px"`:""} aria-hidden="true">${IC[n]}</svg>`;
+let popI=-1;
+const $=id=>document.getElementById(id),DN=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],PAL=["#2F6BFF","#35D6C0","#FFB020","#8B5CF6","#FF6B57","#3AA8FF","#14966F","#5B8CFF"];
+let S={data:{},subs:[{n:"General"}],tr:[],req:76,dh:6,sch:"classic",tasks:[]},tf="all",tab="home",wk=0,mon=new Date().getMonth(),yr=new Date().getFullYear(),draft=null,cur=null,pl={x:0,y:0};
+try{const j=JSON.parse(localStorage.getItem("att2")||"null");if(j)S=Object.assign(S,j);else{const o=JSON.parse(localStorage.getItem("att")||"{}");for(const k in o)S.data[k]={e:[{s:"General",t:o[k].t,a:o[k].a}]};S.req=+localStorage.getItem("req")||76}}catch(e){}
+if(!Array.isArray(S.tr))S.tr=[];
+const persist=()=>{try{localStorage.setItem("att2",JSON.stringify(S))}catch(e){}};
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const esc=s=>String(s).replace(/[&<>"']/g,c=>"&#"+c.charCodeAt(0)+";");
+function dt(r){let t=0,a=0;if(r&&!r.h)r.e.forEach(x=>{t+=x.t;a+=x.a});return{t,a}}
+function sum(f){let t=0,a=0;for(const k in S.data)if(!f||f(k)){const d=dt(S.data[k]);t+=d.t;a+=d.a}return{t,a}}
+function subSum(n){let t=0,a=0;for(const k in S.data){const r=S.data[k];if(!r.h)r.e.forEach(x=>{if(x.s==n){t+=x.t;a+=x.a}})}return{t,a}}
+function cls(r){if(!r)return"";if(r.h)return"hol";const d=dt(r);if(!d.t)return"";const q=d.a/d.t*100;return q>=75?"hi":q>=50?"lo":d.a>0?"or":"zero"}
+function safe(a,t){const r=S.req/100;if(!t)return"No classes logged yet.";if(a/t>=r){const x=Math.floor(a/r-t+1e-9);return`You can safely miss <b>${x}</b> hr${x==1?"":"s"}`}const y=Math.ceil((r*t-a)/(1-r)-1e-9);return`Attend next <b>${y}</b> hr${y==1?"":"s"} to reach ${S.req}%`}
+function ring(p,col,sz,sw,txt){const r=(sz-sw)/2,C=2*Math.PI*r,h=sz/2;return`<div class="ring" style="width:${sz}px;height:${sz}px"><svg viewBox="0 0 ${sz} ${sz}" width="${sz}" height="${sz}"><circle class="t" cx="${h}" cy="${h}" r="${r}" stroke-width="${sw}"/><circle class="rp" data-p="${p}" data-c="${C}" cx="${h}" cy="${h}" r="${r}" stroke-width="${sw}" stroke="${col}" stroke-dasharray="${C}" stroke-dashoffset="${C}"/></svg><div>${txt}</div></div>`}
+const anim=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll(".rp").forEach(e=>{e.style.transitionDelay=(window._lag||0)+"ms";e.style.strokeDashoffset=e.dataset.c*(1-Math.min(100,e.dataset.p)/100)})));
+
+function home(){const now=new Date(),s=sum(),p=s.t?s.a/s.t*100:0,ws=new Date(now);ws.setDate(now.getDate()-((now.getDay()+6)%7)+wk*7);
+ let w="";for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(ws.getDate()+i);const k=iso(d),r=S.data[k],q=dt(r);w+=`<button class="d ${cls(r)} ${k==iso(now)?"today":""}" onclick="op('${k}')"><b>${DN[i]}</b><span>${d.getDate()}</span><small>${r?r.h?I("sun",12):q.a+"/"+q.t:"–"}</small></button>`}
+ const tk=iso(now),nd=S.data[tk]?"":`<div class="nudge"><span class="ni">${I("bell",17)}Today isn't logged yet</span><button onclick="op('${tk}')">Log now</button></div>`;
+ return nd+`<div class="card hero"><div class="hb">${ring(p,"#FFB020",220,14,'<span class="big">'+p.toFixed(0)+'%</span><span class="small">attended</span>')}<div class="tx"><div class="mu">Overall attendance</div>${safe(s.a,s.t)}<div class="mu">to stay at ${S.req}%</div></div></div>
+ <div class="chips"><div><b>${s.a}</b>attended</div><div><b>${s.t-s.a}</b>missed</div><div><b>${s.t}</b>total hrs</div></div></div>
+ <div class="card"><div class="row"><h2>${I("cal")}Week of ${ws.getDate()} ${MN[ws.getMonth()]}</h2><div class="nav2"><button onclick="wk--;render()" aria-label="Previous week">${I("chevl")}</button><button onclick="wk=0;render()" aria-label="This week">${I("dot")}</button><button onclick="wk++;render()" aria-label="Next week">${I("chevr")}</button></div></div><div class="week">${w}</div><div class="mu" style="margin-top:10px">Tap a day to add classes, subjects or a holiday.</div></div>
+ <div class="card"><h2>${I("calc")}Bunk planner</h2><div class="pl">Skip next <b id="xv">${pl.x}</b> hrs<input type="range" min="0" max="20" value="${pl.x}" oninput="pl.x=+this.value;plan()"></div><div class="pl">Attend next <b id="yv">${pl.y}</b> hrs<input type="range" min="0" max="20" value="${pl.y}" oninput="pl.y=+this.value;plan()"></div><div class="res" id="pr">${planH()}</div></div>`}
+function planH(){const s=sum(),n=s.t+pl.x+pl.y;if(!n)return"Log classes first";const p=(s.a+pl.y)/n*100;return`Your attendance would be<br><b style="color:var(--${p>=S.req?"ok":"bad"})">${p.toFixed(1)}%</b> <span class="pi ${p>=S.req?"g":"r"}">${p>=S.req?I("check",18):I("alert",16)+" below "+S.req+"%"}</span>`}
+function plan(){$("xv").textContent=pl.x;$("yv").textContent=pl.y;const r=$("pr");r.innerHTML=planH();r.animate([{opacity:.5,transform:"scale(.97)"},{opacity:1,transform:"none"}],{duration:220,easing:"cubic-bezier(.22,.8,.3,1)"})}
+
+function calv(){const pre=yr+"-"+String(mon+1).padStart(2,"0"),m=sum(k=>k.startsWith(pre)),mp=m.t?m.a/m.t*100:0,hl=Object.keys(S.data).filter(k=>k.startsWith(pre)&&S.data[k].h).length;
+ const c=!m.t?"var(--ringbg)":mp>=80?"var(--hi)":mp>0?"var(--lo)":"var(--zero)";
+ let g=DN.map(d=>`<div class="h">${d[0]}</div>`).join("");const f=(new Date(yr,mon,1).getDay()+6)%7;for(let i=0;i<f;i++)g+='<div class="c e"></div>';
+ for(let d=1;d<=new Date(yr,mon+1,0).getDate();d++){const k=pre+"-"+String(d).padStart(2,"0"),r=S.data[k],q=dt(r);g+=`<button class="c ${cls(r)}" onclick="op('${k}')">${d}<small>${r?r.h?I("sun",11):q.a+"/"+q.t:""}</small></button>`}
+ return`<div class="card"><h2>${I("cal")}Calendar ${yr}</h2><div class="months">${MN.map((n,i)=>`<button class="m ${i==mon?"on":""}" onclick="mon=${i};render()">${n}</button>`).join("")}</div>
+ <div class="ringbox">${ring(mp,c,120,12,Math.round(mp)+"%")}<div class="stats"><div>Total classes: <b>${m.t} hrs</b></div><div>Attended: <b>${m.a} hrs</b></div><div>Missed: <b>${m.t-m.a} hrs</b></div><div>Holidays: <b>${hl}</b></div></div></div>
+ <div class="cal">${g}</div><div class="leg"><span><i style="background:var(--hi)"></i>75–100%</span><span><i style="background:var(--lo)"></i>50–74%</span><span><i style="background:var(--or)"></i>Below 50%</span><span><i style="background:var(--zero)"></i>Absent (0)</span><span><i style="background:var(--hol)"></i>Holiday</span><span><i style="background:var(--none)"></i>No data</span></div></div>`}
+
+function trCalc(u){const r=S.req/100,p=u.t?u.a/u.t*100:0,need=Math.max(0,Math.ceil(r*u.t-u.a-1e-9)),ok=!!u.t&&p>=S.req;return{p,ok,col:u.t?`var(--${ok?"ok":"bad"})`:"var(--mu)",pt:u.t?p.toFixed(1)+"%":"–",st:`${u.a}/${u.t} classes · ${!u.t?"Set a target to see your status":ok?I("check",14)+" Above "+S.req+"%":"Attend <b>"+need+"</b> more to reach "+S.req+"%"}`}}
+function updTr(i){const u=S.tr[i],c=trCalc(u),q=id=>$(id+i);if(!q("tp"))return;const pe=q("tp");pe.textContent=c.pt;pe.style.color=c.col;q("tb").style.width=Math.min(100,c.p)+"%";q("ti").value=u.t;q("ai").value=u.a;q("ts").innerHTML=c.st;pe.animate([{transform:"scale(1.15)"},{transform:"scale(1)"}],{duration:220,easing:"ease-out"})}
+function trStep(i,k,l,v){return`<div class="row${k=="t"?"":" "}" style="${k=="t"?"margin-bottom:8px":""}"><span class="mu" style="min-width:70px">${l}</span><div class="row" style="gap:6px"><button class="x" aria-label="Decrease" onclick="stepTr(${i},'${k}',-1)">${I("minus")}</button><input type="number" inputmode="numeric" min="0" id="${k=="t"?"ti":"ai"}${i}" value="${v}" style="width:64px;text-align:center" onchange="setTr(${i},'${k}',this.value)" onfocus="this.select()"><button class="x" aria-label="Increase" onclick="stepTr(${i},'${k}',1)">${I("plus")}</button></div></div>`}
+function subv(){return`<div class="card"><h2>${I("plus")}Add subject</h2><input type="text" id="ns" class="fw" placeholder="Subject name, e.g. Maths" style="width:100%;margin-bottom:8px"><div class="row"><input type="number" id="nt" min="0" placeholder="Target classes" style="flex:1;min-width:0"><input type="number" id="na" min="0" placeholder="Attended" style="flex:1;min-width:0"></div><button class="pri" style="width:100%;margin-top:10px" onclick="addSub()">Add subject</button><div class="mu" style="margin-top:8px">Each subject has its own tracker. Nothing here is linked to Home or the Calendar.</div></div>`+
+ (S.tr.length?S.tr.map((u,i)=>{const c=trCalc(u),col=PAL[i%8];return`<div class="card" style="border-left:6px solid ${col}"><div class="row"><b>${esc(u.n)}</b><span id="tp${i}" style="font-weight:800;font-size:22px;color:${c.col}">${c.pt}</span></div><div class="bar"><i id="tb${i}" style="width:${Math.min(100,c.p)}%;background:${col}"></i></div>${trStep(i,"t","Target",u.t)}${trStep(i,"a","Attended",u.a)}<div class="row" style="margin-top:10px"><span class="mu" id="ts${i}">${c.st}</span><button class="x" aria-label="Delete subject" title="Delete subject" onclick="delSub(${i})">${I("trash")}</button></div></div>`}).join(""):'<div class="card mu empty">'+I("book")+'No subjects yet. Add your first one above</div>')}
+
+function more(){return`<div class="card"><h2>${I("settings")}Settings</h2>
+ <div class="set"><span>Required attendance %</span><input type="number" min="1" max="99" value="${S.req}" onchange="S.req=Math.min(99,Math.max(1,+this.value||76));persist();render()"></div>
+ <div class="set"><span>Default class hours / day</span><input type="number" min="1" max="12" value="${S.dh}" onchange="S.dh=Math.min(12,Math.max(1,+this.value||6));persist()"></div>
+ <div class="set"><span>Glass blur<div class="mu" style="font-size:11px;margin-top:2px">Turn off if the app feels slow</div></span><button class="tgl ${glassOn()?"on":""}" role="switch" aria-checked="${glassOn()}" aria-label="Glass blur" onclick="togGlass(this)"><i></i></button></div>
+ 
+ <div class="mu">Day colours by that day's attendance: blue = 75–100%, green = 50–74%, orange = below 50%, red = absent (0%), yellow = holiday.</div></div>
+ <div class="card"><h2>${I("cap")}New semester</h2><div class="mu" style="margin-bottom:10px">Finished your semester exams? Reset attendance to 0 and start fresh. Done tasks and tasks you marked unfinished are cleared. Pending tasks, subjects and settings are kept.</div><button class="sec" style="width:100%;background:var(--zero);color:#fff" onclick="resetAtt()">${rc?I("alert",16)+" Tap again to confirm reset":I("refresh",16)+" Reset attendance to zero"}</button>${S.undo?`<button class="sec" style="width:100%;margin-top:8px" onclick="undoRes()">${I("undo",16)} Undo last reset</button>`:""}</div>
+ <div class="card"><h2>${I("box")}Backup</h2><textarea id="bk" placeholder="Export copies your data here. To restore, paste it here and tap Import."></textarea><div class="btns"><button class="sec" onclick="expo()">Export</button><button class="pri" onclick="impo()">Import</button></div><div class="mu" id="bm" style="margin-top:8px"></div></div>
+ <div class="card"><h2>${I("bulb")}Tips</h2><div class="mu"><div class="tip">${I("phone")}<span>Add to home screen: open this page in your browser menu and choose "Add to Home Screen".</span></div><div class="tip">${I("bell")}<span>Set a daily phone alarm named "Log attendance" so the habit sticks.</span></div><div class="tip">${I("sun")}<span>Mark holidays so they don't hurt your percentage.</span></div></div></div>`}
+
+let rc=0;
+function resetAtt(){if(!rc){rc=1;render();setTimeout(()=>{rc=0;if(tab=="more")render()},4000);return}rc=0;S.undo=S.data;S.undoT=S.tasks;S.data={};S.tasks=S.tasks.filter(t=>!t.d&&!t.u);persist();render()}
+function undoRes(){if(S.undo){S.data=S.undo;delete S.undo;if(S.undoT){S.tasks=S.undoT;delete S.undoT}persist();render()}}
+function sch(v){S.sch=v;persist();render()}
+const TT={exam:["pencil","Exam","#FF6B57"],assign:["file","Assignment","#2F6BFF"],sem:["mic","Seminar","#8B5CF6"],notes:["notes","Notes","#14966F"]};
+function dd(s){if(!s)return["No date","var(--mu)",999];const n=Math.round((new Date(s+"T00:00")-new Date(iso(new Date())+"T00:00"))/864e5);return n<0?["Overdue "+(-n)+"d","var(--bad)",n]:n==0?["Today","var(--or)",0]:n==1?["Tomorrow","var(--or)",1]:["In "+n+" days",n<=3?"var(--or)":"var(--mu)",n]}
+function taskv(){const T=S.tasks,dn=T.filter(x=>x.d).length,pd=T.length-dn,od=T.filter(x=>!x.d&&x.due&&dd(x.due)[2]<0).length,w7=T.filter(x=>!x.d&&x.due&&dd(x.due)[2]>=0&&dd(x.due)[2]<=7).length,p=T.length?dn/T.length*100:0;
+ const L=T.map((x,i)=>({x,i})).filter(o=>tf=="all"||o.x.k==tf).sort((a,b)=>((+!!a.x.d)-(+!!b.x.d))||(a.x.due||"9").localeCompare(b.x.due||"9"));
+ const F=[["all","All"],["exam","Exams"],["assign","Assignments"],["sem","Seminars"],["notes","Notes"]];
+ return`<div class="card hero"><div class="hb">${ring(p,"#FFB020",220,14,'<span class="big">'+Math.round(p)+'%</span><span class="small">done</span>')}<div class="tx"><div class="mu">Task progress</div><b style="font-size:22px">${pd} pending</b><div class="mu">${dn} of ${T.length} completed</div></div></div><div class="chips"><div><b>${w7}</b>due in 7 days</div><div><b>${od}</b>overdue</div><div><b>${dn}</b>done</div></div></div>
+ <div class="card"><h2>${I("plus")}New task</h2><select id="tk" class="fw">${Object.keys(TT).map(k=>`<option value="${k}">${TT[k][1]}</option>`).join("")}</select><input type="text" id="tt" class="fw" placeholder="e.g. Unit 3 test, Lab record, Chapter 5 notes"><div class="row"><select id="ts" style="flex:1"><option value="">No subject</option>${S.subs.map(u=>`<option>${esc(u.n)}</option>`).join("")}</select><input type="date" id="td" style="flex:1"></div><button class="pri" style="width:100%;margin-top:10px" onclick="addT()">Add task</button></div>
+ <div class="months">${F.map(f=>`<button class="m ${tf==f[0]?"on":""}" onclick="tf='${f[0]}';render()">${f[1]}</button>`).join("")}</div>
+ ${L.length?L.map(o=>{const x=o.x,t=TT[x.k],u=dd(x.due);return`<div class="card tk ${x.d?"dn":""} ${x.u?"un":""}" style="border-left:6px solid ${t[2]}"><button class="ck ${x.d?"on":""} ${popI==o.i&&x.d?"pop":""}" aria-label="Mark done" onclick="tgl(${o.i})">${x.d?I("check"):""}</button><button class="ux ${x.u?"on":""} ${popI==o.i&&x.u?"pop":""}" title="Mark unfinished" aria-label="Mark unfinished" onclick="unf(${o.i})">${I("x")}</button><div style="flex:1;min-width:0"><b>${esc(x.t)}</b><div class="mu tl"><span style="color:${t[2]};display:inline-flex">${I(t[0])}</span>${t[1]}${x.s?" · "+esc(x.s):""}</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:${x.d?"var(--ok)":x.u?"var(--bad)":u[1]}">${x.d?"Done":x.u?"Unfinished":u[0]}</div><div class="mu" style="font-size:11px">${x.due||""}</div></div><button class="x" onclick="delT(${o.i},this)" title="Delete task" aria-label="Delete task">${I("trash")}</button></div>`}).join(""):'<div class="card mu empty">'+I("checkc")+'Nothing here yet. Add your first task above</div>'}`}
+function addT(){const t=$("tt").value.trim();if(!t)return;S.tasks.push({k:$("tk").value,t,s:$("ts").value,due:$("td").value,d:false});persist();render()}
+function tgl(i){const t=S.tasks[i];t.d=!t.d;if(t.d)t.u=false;persist();popI=i;render();popI=-1}
+function unf(i){const t=S.tasks[i];t.u=!t.u;if(t.u)t.d=false;persist();popI=i;render();popI=-1}
+function delT(i,el){const c=el&&el.closest(".card");const go=()=>{S.tasks.splice(i,1);persist();render()};if(c){if(c.classList.contains("out"))return;c.classList.add("out");setTimeout(go,230)}else go()}
+function addSub(){const n=$("ns").value.trim();if(!n||S.tr.some(u=>u.n==n))return;const t=Math.max(0,Math.floor(+$("nt").value||0)),a=Math.min(t,Math.max(0,Math.floor(+$("na").value||0)));S.tr.push({n,t,a});if(!S.subs.some(u=>u.n==n))S.subs.push({n});persist();render()}
+function setTr(i,k,v){const u=S.tr[i];v=Math.max(0,Math.floor(+v||0));if(k=="t"){u.t=v;u.a=Math.min(u.a,v)}else u.a=Math.min(u.t,v);persist();updTr(i)}
+function stepTr(i,k,n){setTr(i,k,S.tr[i][k]+n)}
+function delSub(i){if(!confirm("Delete this subject and its tracker?"))return;const n=S.tr[i].n;S.tr.splice(i,1);const j=S.subs.findIndex((u,x)=>x>0&&u.n==n);if(j>0)S.subs.splice(j,1);persist();render()}
+function expo(){const t=JSON.stringify(S);$("bk").value=t;$("bk").select();try{navigator.clipboard.writeText(t).then(()=>$("bm").textContent="Copied to clipboard. Save it somewhere safe.",()=>$("bm").textContent="Select and copy the text above.")}catch(e){$("bm").textContent="Select and copy the text above."}}
+function impo(){try{const j=JSON.parse($("bk").value);if(!j.data)throw 0;S=Object.assign(S,j);persist();render()}catch(e){$("bm").textContent="That doesn't look like a valid backup."}}
+const isDark=()=>{const r=document.documentElement;return r.dataset.theme=="dark"||(!r.dataset.theme&&matchMedia("(prefers-color-scheme:dark)").matches)};
+function themeIcon(){$("tb").innerHTML=I(isDark()?"sun":"moon",18)}
+function tog(){document.documentElement.dataset.theme=isDark()?"light":"dark";themeIcon();$("tb").animate([{transform:"rotate(-90deg) scale(.7)"},{transform:"none"}],{duration:380,easing:"cubic-bezier(.22,.8,.3,1)"})}
+
+function op(k){cur=k;const r=S.data[k];draft=r?JSON.parse(JSON.stringify(r)):{e:[{s:S.subs[0].n,t:S.dh,a:0}]};if(!draft.e.length)draft.e=[{s:S.subs[0].n,t:S.dh,a:0}];sh();clearTimeout(window.sto);document.body.classList.add("so");requestAnimationFrame(()=>requestAnimationFrame(()=>$("ov").classList.add("on")));clearTimeout(window.sgl);$("sheet").classList.add("gl")}
+function row(x,i){const o=S.subs.map(u=>u.n);if(!o.includes(x.s))o.push(x.s);return`<div class="er"><select onchange="draft.e[${i}].s=this.value">${o.map(n=>`<option ${n==x.s?"selected":""}>${esc(n)}</option>`).join("")}</select>
+ <div class="st" data-l="Class hrs"><button aria-label="Fewer class hours" onclick="ed(${i},'t',-1)">${I("minus")}</button><output>${x.t}</output><button aria-label="More class hours" onclick="ed(${i},'t',1)">${I("plus")}</button></div>
+ <div class="st" data-l="Attended"><button aria-label="Fewer attended" onclick="ed(${i},'a',-1)">${I("minus")}</button><output>${x.a}</output><button aria-label="More attended" onclick="ed(${i},'a',1)">${I("plus")}</button></div>${draft.e.length>1?`<button class="x" aria-label="Remove class" onclick="sync();draft.e.splice(${i},1);sh()">${I("x")}</button>`:""}</div>`}
+function sh(){$("sheet").innerHTML=`<h2>${new Date(cur+"T00:00").toDateString()}</h2><label class="tg"><input type="checkbox" ${draft.h?"checked":""} onchange="sync();draft.h=this.checked;sh()"> ${I("sun",16)} Holiday / no classes</label>`+(draft.h?"":draft.e.map(row).join("")+`<button class="add" onclick="nr()">${I("plus",16)} Add another class</button><div class="btns"><button class="sec" onclick="allP(1)">${I("checkc",17)} All present</button><button class="sec" onclick="allP(0)">${I("xc",17)} All absent</button></div>`)+`<div class="btns"><button class="sec" onclick="clr()">Clear</button><button class="sec" onclick="closeS()">Cancel</button><button class="pri" onclick="save()">Save</button></div>`}
+function sync(){document.querySelectorAll("#sheet .er select").forEach((s,i)=>{if(draft.e[i])draft.e[i].s=s.value})}
+function nr(){sync();const u=draft.e.map(x=>x.s),s=(S.subs.find(q=>!u.includes(q.n))||S.subs[0]).n;draft.e.push({s,t:1,a:0});sh()}
+function ed(i,k,n){sync();const x=draft.e[i];if(k=="t"){x.t=Math.max(0,Math.min(12,x.t+n));x.a=Math.min(x.a,x.t)}else x.a=Math.max(0,Math.min(x.t,x.a+n));sh()}
+function allP(v){sync();draft.e.forEach(x=>x.a=v?x.t:0);sh()}
+function save(){sync();if(draft.h)S.data[cur]={h:1,e:[]};else{const e=draft.e.filter(x=>x.t>0);if(e.length)S.data[cur]={e};else delete S.data[cur]}persist();closeS();render()}
+function clr(){delete S.data[cur];persist();closeS();render()}
+function closeS(){$("sheet").classList.remove("gl");clearTimeout(window.sgl);$("ov").classList.remove("on");clearTimeout(window.sto);window.sto=setTimeout(()=>document.body.classList.remove("so"),340)}
+$("ov").onclick=e=>{if(e.target.id=="ov")closeS()};
+
+const LOW=(navigator.deviceMemory&&navigator.deviceMemory<=3)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4),glassOn=()=>S.glass===undefined?!LOW:!!S.glass;
+function togGlass(b){S.glass=!glassOn();persist();b.classList.toggle("on",S.glass);b.setAttribute("aria-checked",S.glass);document.documentElement.dataset.glass=S.glass?"on":"off"}
+let lt;const TABS=[["home","home","Home"],["cal","cal","Calendar"],["sub","book","Subjects"],["task","checkc","Tasks"],["more","settings","More"]],V={home,cal:calv,sub:subv,task:taskv,more};
+function render(){document.documentElement.dataset.sch=S.sch;document.documentElement.dataset.glass=glassOn()?"on":"off";$("dt").textContent=new Date().toDateString();
+ const nv=$("nav");if(!nv.querySelector("button")){nv.innerHTML=TABS.map(t=>`<button data-t="${t[0]}" onclick="tab='${t[0]}';render()"><span>${I(t[1])}</span>${t[2]}</button>`).join("");nv.insertAdjacentHTML("afterbegin",'<span class="hl" id="tabHl" aria-hidden="true"></span>')}
+ [...nv.querySelectorAll("button")].forEach(b=>b.classList.toggle("on",b.dataset.t==tab));nv.style.setProperty("--i",TABS.findIndex(t=>t[0]==tab));
+ const mn=$("main"),ch=lt!==tab;if(ch&&lt!==undefined)scrollTo(0,0);lt=tab;const first=window._f===undefined;window._f=1;window._lag=ch?140:0;mn.innerHTML=V[tab]();
+ if(ch&&!RM)[...mn.children].forEach((el,i)=>{el.style.animationDelay=Math.min(i,8)*60+"ms";el.classList.add("rise")});
+ $("fab").hidden=!(tab=="home"||tab=="cal");anim();moveHl(first)}
+const RM=matchMedia("(prefers-reduced-motion:reduce)").matches;
+function moveHl(instant){const h=$("tabHl"),on=document.querySelector("#nav button.on");if(!h||!on)return;if(instant)h.style.transition="none";h.style.width=on.offsetWidth+"px";h.style.transform="translate3d("+on.offsetLeft+"px,0,0)";if(instant){void h.offsetWidth;h.style.transition=""}}
+addEventListener("resize",()=>moveHl(true));
+themeIcon();render();
+addEventListener("load",()=>setTimeout(()=>(window.requestIdleCallback||setTimeout)(()=>{const o=$("ov");if(o.classList.contains("on"))return;$("sheet").innerHTML="<h2>.</h2>";o.classList.add("warm");requestAnimationFrame(()=>requestAnimationFrame(()=>o.classList.remove("warm")))}),1500));
+(function(){const sh=$("sheet");let y0=null,dy=0,t0=0;
+sh.addEventListener("touchstart",e=>{const t=e.touches[0];if(t.clientY-sh.getBoundingClientRect().top>60||e.target.closest("input,select,textarea,button"))return;y0=t.clientY;dy=0;t0=Date.now();sh.classList.remove("gl");clearTimeout(window.sgl);sh.style.setProperty("transition","none","important")},{passive:true});
+sh.addEventListener("touchmove",e=>{if(y0==null)return;dy=Math.max(0,e.touches[0].clientY-y0);sh.style.setProperty("transform","translate3d(0,"+dy+"px,0)","important")},{passive:true});
+const end=()=>{if(y0==null)return;const v=dy/Math.max(1,Date.now()-t0),c=dy>110||v>.6;y0=null;sh.style.removeProperty("transition");sh.style.removeProperty("transform");if(c)closeS();else{window.sgl=setTimeout(()=>sh.classList.add("gl"),400)}};
+sh.addEventListener("touchend",end,{passive:true});sh.addEventListener("touchcancel",end,{passive:true})})();
+if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script><script>
+(function(){let ac=null;
+function tick(){try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state==="suspended")ac.resume();
+const t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();
+o.type="sine";o.frequency.setValueAtTime(520,t);o.frequency.exponentialRampToValueAtTime(380,t+0.02);
+g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.045,t+0.002);g.gain.exponentialRampToValueAtTime(0.0001,t+0.028);
+o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+0.035)}catch(e){}
+if(navigator.vibrate)try{navigator.vibrate(5)}catch(e){}}
+document.addEventListener("click",e=>{if(e.target.closest("button,.fab,select,input[type=checkbox],label.tg"))tick()},true)})();
+</script></body></html>
